@@ -37,14 +37,16 @@ A blockchain-based backend service for managing Dungeons & Dragons character NFT
 
 Create a `.env` file in the root directory:
 
-- BASE_SEPOLIA_URL=your_base_sepolia_url
-- CHAIN_ID=84532
-- NETWORK=base-sepolia
-- CDP_API_KEY_NAME=your_coinbase_api_key_name
-- CDP_PRIVATE_KEY=your_private_key
-- PINATA_API_KEY=your_pinata_api_key
-- PINATA_API_SECRET=your_pinata_secret
-- OPENAI_API_KEY=your_openai_api_key
+```bash
+BASE_SEPOLIA_URL=your_base_sepolia_url
+CHAIN_ID=84532
+NETWORK=base-sepolia
+CDP_API_KEY_NAME=your_coinbase_api_key_name  # get your keys from portal.cdp.coinbase.com
+CDP_PRIVATE_KEY=your_private_key
+PINATA_API_KEY=your_pinata_api_key
+PINATA_API_SECRET=your_pinata_secret
+OPENAI_API_KEY=your_openai_api_key
+```
 
 ## Installation
 
