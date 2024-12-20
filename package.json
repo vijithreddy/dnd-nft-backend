@@ -1,0 +1,52 @@
+{
+  "name": "dnd-nft-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx tsc",
+    "deploy": "ts-node src/scripts/deploy.ts",
+    "start": "ts-node src/server.ts",
+    "test": "ts-node src/scripts/test.ts",
+    "dev": "nodemon src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@coinbase/coinbase-sdk": "^0.10.0",
+    "@coinbase/wallet-sdk": "^4.2.3",
+    "@langchain/core": "^0.3.18",
+    "@langchain/openai": "^0.3.13",
+    "@openzeppelin/contracts": "^5.0.1",
+    "@pinata/sdk": "^2.1.0",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^18.0.6",
+    "@vercel/kv": "^3.0.0",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.4",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "ioredis": "^5.4.1",
+    "jsdom": "^25.0.1",
+    "langchain": "^0.3.6",
+    "morgan": "^1.10.0",
+    "node-localstorage": "^3.0.5",
+    "openai": "^4.73.1",
+    "pinata-web3": "^0.5.2",
+    "solc": "^0.8.28",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node-fetch": "^2.6.12",
+    "nodemon": "^3.1.7"
+  }
+}
