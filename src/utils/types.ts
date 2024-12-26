@@ -1,7 +1,7 @@
 // src/types.ts
 
 import { ethers } from 'ethers';
-import { Wallet } from '@coinbase/coinbase-sdk';
+import { Token } from 'typedi';
 
 // Base Types
 export interface ServiceError extends Error {
@@ -82,7 +82,7 @@ export interface CreateCharacterResponse {
 // Contract Types
 export interface ContractDeploymentResult {
   address: string;
-  abi: any[];
+  abi: any;
 }
 
 export interface DeploymentInfo extends ContractDeploymentResult {
@@ -192,7 +192,6 @@ export interface IWalletService {
 }
 
 export interface IContractService {
-  setWalletService(walletService: IWalletService): void;
   deployContract(): Promise<ContractDeploymentResult>;
   getContract(): ethers.Contract;
   getContractAddress(): string;
@@ -334,3 +333,22 @@ export class ServiceError extends Error {
         this.statusCode = 500;
     }
 }
+
+export enum ServiceState {
+  UNINITIALIZED = 'UNINITIALIZED',
+  DEPLOYMENT = 'DEPLOYMENT',
+  RUNTIME = 'RUNTIME'
+}
+
+export interface IGameService {
+    processAction(action: string, context: any): Promise<GameMasterResponse>;
+}
+
+export const Tokens = {
+    WalletService: new Token<IWalletService>('WALLET_SERVICE'),
+    CharacterService: new Token<ICharacterService>('CHARACTER_SERVICE'),
+    AIService: new Token<IAIService>('AI_SERVICE'),
+    IPFSService: new Token<IIPFSService>('IPFS_SERVICE'),
+    ContractDeploymentService: new Token<IContractService>('CONTRACT_DEPLOYMENT_SERVICE'),
+    GameService: new Token<IGameService>('GAME_SERVICE')
+};

@@ -5,14 +5,35 @@ import {
     ICharacterService,
     GameMasterResponse,
     CharacterStats,
-    ServiceError
+    ServiceError,
+    IGameService
 } from '../utils/types';
+import { Service, Inject } from 'typedi';
+import { Tokens } from '../utils/types';
 
-export class GameService {
+@Service(Tokens.GameService)
+export class GameService implements IGameService {
     constructor(
-        private characterService: ICharacterService,
-        private aiService: IAIService
+        @Inject(Tokens.CharacterService) private characterService: ICharacterService,
+        @Inject(Tokens.AIService) private aiService: IAIService
     ) {}
+
+    async processAction(action: string, context: any): Promise<GameMasterResponse> {
+        // Delegate to appropriate method based on action type
+        if (context.questId) {
+            return this.processQuestAction(context.tokenId, context.questId, action, context);
+        } else if (context.combatState) {
+            const result = await this.processCombatAction(context.tokenId, action, context.combatState);
+            return {
+                description: `Combat result: ${result.outcome}`,
+                outcome: result.outcome === 'victory' ? 'success' : result.outcome === 'defeat' ? 'failure' : 'partial',
+                experience: result.experienceGained || 0,
+                rewards: result.rewards,
+                nextOptions: result.nextActions
+            };
+        }
+        throw new ServiceError('Invalid action context');
+    }
 
     async processQuestAction(
         tokenId: number,

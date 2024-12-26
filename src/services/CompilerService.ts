@@ -23,7 +23,17 @@ export class CompilerService {
     }
   }
 
-  static async compile(filePath: string, contractName: string): Promise<CompilationResult> {
+  async compile(filePath: string, contractName: string): Promise<{ abi: any, bytecode: string }> {
+    try {
+      const result = await CompilerService.compile(filePath, contractName);
+      return result;
+    } catch (error) {
+      logger.error('Compilation failed:', error);
+      throw error;
+    }
+  }
+
+  static async compile(filePath: string, contractName: string): Promise<{ abi: any, bytecode: string }> {
     try {
       const source = fs.readFileSync(filePath, 'utf8');
       const fileName = path.basename(filePath);

@@ -6,22 +6,20 @@ import { IWalletService, IContractService, ContractDeploymentResult, DeploymentI
 import * as fs from 'fs';
 import * as path from 'path';
 import logger from '../utils/Logger';
+import { Service, Inject } from 'typedi';
 
+@Service()
 export class ContractDeploymentService implements IContractService {
   private contract: ethers.Contract | null = null;
   private contractAddress: string | null = null;
-  private walletService?: IWalletService;
   private readonly provider: ethers.JsonRpcProvider;
 
-  constructor() {
+  constructor(
+    @Inject('WALLET_SERVICE') private walletService: IWalletService
+  ) {
     const networkUrl = process.env.BASE_SEPOLIA_URL || 'https://sepolia.base.org';
     this.provider = new ethers.JsonRpcProvider(networkUrl);
     logger.debug('ContractDeploymentService initialized', { networkUrl });
-  }
-
-  setWalletService(walletService: IWalletService): void {
-    this.walletService = walletService;
-    logger.debug('WalletService set');
   }
 
   async deployContract(): Promise<ContractDeploymentResult> {

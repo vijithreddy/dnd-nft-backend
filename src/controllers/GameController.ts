@@ -1,68 +1,32 @@
 // src/controllers/GameController.ts
 
 import { Router, Request, Response, RequestHandler } from 'express';
-import rateLimit from 'express-rate-limit';
-import logger from '../utils/Logger';
-import { morganConfig } from '../middleware/morganConfig';
+import { Service, Inject } from 'typedi';
 import { 
     ICharacterService, 
     IAIService, 
+    Tokens,
     CharacterClass,
     ServiceError,
-    IWalletService
+    GameMasterResponse
 } from '../utils/types';
+import logger from '../utils/Logger';
 
+@Service()
 export class GameController {
     private router: Router;
 
     constructor(
         private characterService: ICharacterService,
-        private aiService: IAIService,
-        private walletService: IWalletService
+        private aiService: IAIService
     ) {
         this.router = Router();
-        this.setupMiddleware();
         this.initializeRoutes();
     }
 
-    private setupMiddleware() {
-        this.router.use(morganConfig);
-    }
-
-    private createCharacterLimiter = rateLimit({
-        windowMs: 24 * 60 * 60 * 1000, // 24 hours
-        max: 2, // Limit each IP to 2 character creations per day
-        message: {
-            error: 'You can only create 2 characters per day. Please try again tomorrow.'
-        },
-        standardHeaders: true,
-        legacyHeaders: false,
-    });
-
     private initializeRoutes() {
-        this.router.post('/characters', 
-            this.createCharacterLimiter,
-            ((req: Request, res: Response) => {
-                logger.info('Character creation requested', {
-                    playerAddress: req.body.playerAddress,
-                    characterClass: req.body.characterClass
-                });
-                return this.createCharacter(req, res);
-            }) as RequestHandler
-        );
-
-        this.router.get('/characters/:address', (req: Request, res: Response) => {
-            logger.info('Characters lookup requested', {
-                address: req.params.address,
-                page: req.query.page,
-                limit: req.query.limit
-            });
-            return this.getCharactersByOwner(req, res);
-        });
-    }
-
-    getRouter(): Router {
-        return this.router;
+        this.router.post('/characters', this.createCharacter.bind(this) as RequestHandler);
+        this.router.get('/characters/:address', this.getCharactersByOwner.bind(this) as RequestHandler);
     }
 
     private async createCharacter(req: Request, res: Response) {
@@ -91,7 +55,7 @@ export class GameController {
 
             const result = await this.characterService.createCharacter(
                 playerAddress,
-                characterClass
+                characterClass as CharacterClass
             );
 
             logger.info('Character created successfully', {
@@ -102,9 +66,6 @@ export class GameController {
 
             res.status(201).json(result);
         } catch (error) {
-            logger.error('Error creating character', {
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
             this.handleError(error, res);
         }
     }
@@ -130,27 +91,29 @@ export class GameController {
 
             res.json(result);
         } catch (error) {
-            logger.error('Error getting characters', {
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
-            res.status(500).json({ error: 'Failed to get characters' });
+            this.handleError(error, res);
         }
     }
 
     private handleError(error: unknown, res: Response) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
         if (error instanceof ServiceError) {
             logger.error('Service error occurred', {
-                message,
+                message: error.message,
                 code: error.code,
                 statusCode: error.statusCode
             });
             return res.status(error.statusCode || 500).json({
-                error: message,
+                error: error.message,
                 code: error.code
             });
         }
+
+        const message = error instanceof Error ? error.message : 'Unknown error';
         logger.error('Unknown error occurred', { message });
         return res.status(500).json({ error: message });
+    }
+
+    getRouter(): Router {
+        return this.router;
     }
 }

@@ -1,21 +1,20 @@
 // src/server.ts
 
+import 'reflect-metadata';
 import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import { WalletService } from './services/WalletService';
-import { IPFSService } from './services/IPFSService';
-import { AIService } from './services/AIService';
-import { CharacterService } from './services/CharacterService';
 import { GameController } from './controllers/GameController';
 import cors from 'cors';
+import { Container } from './core/Container';
+import logger from './utils/Logger';
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 3010;
 
 // Middleware
+const app = express();
 app.use(bodyParser.json());
 
 // CORS configuration
@@ -34,44 +33,25 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     });
 });
 
-async function initializeServices() {
+async function startServer() {
     try {
-        // Initialize services
-        const walletService = new WalletService();
-        await walletService.initialize();
-        
-        const ipfsService = new IPFSService();
-        const aiService = new AIService();
-        
-        // Initialize CharacterService
-        const characterService = new CharacterService(
-            walletService,
-            ipfsService,
-            aiService
-        );
+        // Initialize container before setting up routes
+        await Container.initialize();
 
-        // Initialize GameController
+        // Initialize controllers using token strings
         const gameController = new GameController(
-            characterService,
-            aiService,
-            walletService
+            Container.get('CHARACTER_SERVICE'),
+            Container.get('AI_SERVICE')
         );
-
-        // Set up routes
         app.use('/game', gameController.getRouter());
 
-        // Health check endpoint
-        app.get('/health', (req, res) => {
-            res.json({ status: 'OK', timestamp: new Date().toISOString() });
-        });
-
         app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
+            logger.info(`Server running on port ${PORT}`);
         });
     } catch (error) {
-        console.error('Failed to initialize services:', error);
+        logger.error('Failed to start server:', error);
         process.exit(1);
     }
 }
 
-initializeServices().catch(console.error);
+startServer();

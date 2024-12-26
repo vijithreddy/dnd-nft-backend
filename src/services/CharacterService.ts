@@ -7,21 +7,38 @@ import {
   IIPFSService,
   IAIService,
 } from "../utils/types";
-import contractConfig from "../../deployments/DnDCharacterNFT.json";
 import logger from "../utils/Logger";
+import { Service, Inject } from 'typedi';
+import { Tokens } from "../utils/types";
+import { ethers } from 'ethers';
 
+@Service(Tokens.CharacterService)
 export class CharacterService implements ICharacterService {
+  private contractConfig: any;
+
   constructor(
-    private walletService: IWalletService,
-    private ipfsService: IIPFSService,
-    private aiService: IAIService
-  ) {}
+    @Inject(Tokens.WalletService) private readonly walletService: IWalletService,
+    @Inject(Tokens.IPFSService) private readonly ipfsService: IIPFSService,
+    @Inject(Tokens.AIService) private readonly aiService: IAIService
+  ) {
+    try {
+      this.contractConfig = require("../../deployments/DnDCharacterNFT.json");
+    } catch (error) {
+      logger.warn('Contract configuration not loaded - deployment may be pending');
+      this.contractConfig = null;
+    }
+  }
 
   async createCharacter(
     playerAddress: string,
     characterClass: CharacterClass
   ): Promise<any> {
     try {
+      // Get HDNodeWallet and connect to provider
+      const wallet = this.walletService.getEthersWallet();
+      const provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
+      const signer = wallet.connect(provider);
+      
       // 1. Generate character story and appearance
       logger.info("Starting character creation", {
         characterClass,
@@ -109,10 +126,10 @@ export class CharacterService implements ICharacterService {
       // 8. Mint the NFT
       logger.info("Minting NFT", { playerAddress });
       const mintResult = await this.walletService.invokeContract(
-        contractConfig.address,
+        this.contractConfig.address,
         "mint",
         [playerAddress, stats, metadataUri],
-        contractConfig.abi
+        this.contractConfig.abi
       );
 
       logger.info("NFT minted successfully");
@@ -143,10 +160,10 @@ export class CharacterService implements ICharacterService {
   async getCharacter(tokenId: number): Promise<CharacterBase> {
     try {
       const result = await this.walletService.invokeContract(
-        contractConfig.address,
+        this.contractConfig.address,
         "getCharacter",
         { tokenId },
-        contractConfig.abi
+        this.contractConfig.abi
       );
 
       return {
@@ -178,13 +195,13 @@ export class CharacterService implements ICharacterService {
   async gainExperience(tokenId: number, amount: number): Promise<any> {
     try {
       const result = await this.walletService.invokeContract(
-        contractConfig.address,
+        this.contractConfig.address,
         "gainExperience",
         {
           tokenId,
           amount,
         },
-        contractConfig.abi
+        this.contractConfig.abi
       );
 
       return {
@@ -286,7 +303,7 @@ export class CharacterService implements ICharacterService {
 
       // Get total supply using readContract
       const totalSupplyBigInt = await this.walletService.readContract(
-        contractConfig.address,
+        this.contractConfig.address,
         "totalSupply"
       );
 
@@ -303,14 +320,14 @@ export class CharacterService implements ICharacterService {
       for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
         try {
           const owner = await this.walletService.readContract(
-            contractConfig.address,
+            this.contractConfig.address,
             "ownerOf",
             { tokenId: tokenId.toString() }
           );
 
           if (owner.toLowerCase() === ownerAddress.toLowerCase()) {
             const characterData = await this.walletService.readContract(
-              contractConfig.address,
+              this.contractConfig.address,
               "getCharacter",
               { tokenId: tokenId.toString() }
             );

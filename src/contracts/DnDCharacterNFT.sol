@@ -36,7 +36,7 @@ contract DnDCharacterNFT is ERC721URIStorage, Ownable {
     event LevelUp(uint256 indexed tokenId, uint256 newLevel);
     event SeasonAdvanced(uint256 indexed seasonId);
 
-    constructor() ERC721("DnDVerse Characters", "DNDV") Ownable(msg.sender) {}
+    constructor() ERC721("DnD Characters", "DNDV") Ownable(msg.sender) {}
 
     function _exists(uint256 tokenId) internal view returns (bool) {
         return _tokenExists[tokenId];

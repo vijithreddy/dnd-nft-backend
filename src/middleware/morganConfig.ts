@@ -1,8 +1,11 @@
 import morgan from 'morgan';
-import logger from '../utils/Logger';
 
-export const morganConfig = morgan('[:date[iso]] :method :url :status :response-time ms - :res[content-length]', {
-  stream: {
-    write: (message) => logger.http(message.trim())
-  }
-});
+export const morganConfig: morgan.FormatFn = (tokens, req, res) => {
+    return [
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'), '-',
+        tokens['response-time'](req, res), 'ms'
+    ].join(' ');
+};

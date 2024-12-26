@@ -5,17 +5,28 @@ import { ethers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 import { IWalletService, NetworkConfig, ServiceError } from '../utils/types';
-import * as contractJson from '../../deployments/DnDCharacterNFT.json';
 import logger from '../utils/Logger';
-const contractConfig = contractJson;
 
 export class WalletService implements IWalletService {
   private wallet: Wallet | null = null;
   private ethersWallet: ethers.Wallet | null = null;
   private readonly networkConfig: NetworkConfig;
   private readonly storageDir: string;
+  private readonly contractConfig: any;
+  private readonly isDeployment: boolean;
 
-  constructor() {
+  constructor(isDeployment: boolean = false) {
+    this.isDeployment = isDeployment;
+    
+    // Only check for contract config if not in deployment mode
+    if (!isDeployment) {
+      const deploymentPath = path.join(__dirname, '../../deployments/DnDCharacterNFT.json');
+      if (!fs.existsSync(deploymentPath)) {
+        throw new Error('Contract configuration not found. Please run: npm run deploy');
+      }
+      this.contractConfig = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
+    }
+
     this.networkConfig = {
       url: process.env.BASE_SEPOLIA_URL || 'https://sepolia.base.org',
       chainId: parseInt(process.env.CHAIN_ID || '84532'),
@@ -57,6 +68,7 @@ export class WalletService implements IWalletService {
 
       // Initialize ethers wallet
       const address = await this.wallet.getDefaultAddress();
+      const walletId = address.getId();
       const privateKey = await address.export();
       this.ethersWallet = new ethers.Wallet(privateKey);
 
@@ -66,6 +78,7 @@ export class WalletService implements IWalletService {
       const balanceInEth = ethBalance.toString();
 
       logger.info('Current wallet balance', { balanceInEth });
+      logger.info('Wallet address', { walletId });
 
       if (parseFloat(balanceInEth) < 0.1) {
         logger.warn('Low balance detected, requesting test tokens');
@@ -266,7 +279,7 @@ async readContract(contractAddress: string, method: string, args: any = {}): Pro
     contractAddress: contractAddress as `0x${string}`,
     method,
     args,  // Pass args directly as object
-    abi: contractConfig.abi as any
+    abi: this.contractConfig.abi as any
   });
 }
 }

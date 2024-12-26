@@ -18,7 +18,10 @@ import {
   systemRolePrompts, 
   imagePrompts 
 } from '../prompts/aiPrompts';
+import { Service } from 'typedi';
+import { Tokens } from '../utils/types';
 
+@Service(Tokens.AIService)
 export class AIService implements IAIService {
   private model: ChatOpenAI;
   private dalle: DallEAPIWrapper;
